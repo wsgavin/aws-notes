@@ -2,132 +2,182 @@
 
 I created this document for myself to setup EC2 instances. No warranty.
 
+## Initial Configuration
+
+    tzselect
+    
+    sudo vi /etc/sysconfig/clock
+    
+    ZONE="America/Chicago"
+    UTC=false
+    
+    sudo ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
+    
+http://www.nouveauframework.com/blog/ultimate-guide-to-hosting-wordpress-on-aws-ec2-for-complete-beginners/
+    
+
 ## Initiate and update the environment.
 
-```
-sudo yum update -y
-sudo yum install -y httpd24 php56 mysql55-server php56-mysqlnd php56-gd php-pear
-```
+	sudo yum update -y
+	sudo yum install -y gcc make git
+	sudo yum install -y httpd24 php56
+	sudo yum install -y php56-devel php56-mysqlnd php56-pdo php56-mbstring
+	sudo yum install -y php-pear
+	sudo pear install -all Log
+	sudo yum install -y pcre-devel
+	sudo yum install -y php56-opcache
+	sudo yum install -y re2c
+	sudo yum install -y mod24_ssl
+	sudo yum install -y memcached
+	sudo yum install -y php56-pecl-memcached
+	sudo yum install -y ImageMagick
+	sudo yum install -y ImageMagick-devel
+	sudo pecl install imagick
+	sudo yum install -y mysql-server
+	sudo yum-config-manager --enable epel
+	sudo yum install -y phpmyadmin
+	
+	
+	
+	
+	
+	
+	
+	# sudo yum install -y httpd24 php56 mysql56-server php56-mysqlnd php56-gd php-pear git
+
 
 ## Ensure both httpd and mysqld start on reboots.
 
-```
-sudo chkconfig httpd on
-sudo chkconfig mysqld on
-```
+    sudo chkconfig httpd on
+    sudo chkconfig mysqld on
 
 # Download and setup WordPress.
 
-```
-wget https://wordpress.org/latest.tar.gz
-tar -xzf latest.tar.gz
-```
+    wget https://wordpress.org/latest.tar.gz
+    tar -xzf latest.tar.gz
 
 # Add group www and add ec2-use and apache to www group.
 
-```
-sudo groupadd www
-sudo usermod -a -G www ec2-user
-sudo usermod -a -G www apache
-```
+    sudo groupadd www
+    sudo usermod -a -G www ec2-user
+    sudo usermod -a -G www apache
+    exit
 
 # Setup no-sites
 
-```
-sudo chown -R apache /var/www
-sudo chgrp -R www /var/www
-sudo chmod 2775 /var/www
-find /var/www -type d -exec sudo chmod 2775 {} +
-find /var/www -type f -exec sudo chmod 0664 {} +
-```
+    sudo chown -R apache /var/www
+    sudo chgrp -R www /var/www
+    sudo chmod 2775 /var/www
+    find /var/www -type d -exec sudo chmod 2775 {} +
+    find /var/www -type f -exec sudo chmod 0664 {} +
+
 
 # Setup sites (virtual hosts) and initial WordPress files.
 
-```
-sudo mkdir -p /var/www-sites
+    sudo mkdir -p /var/www-sites
+    sudo mkdir -p /var/www-sites/dubelyoo.com/html
+    sudo mkdir -p /var/www-sites/fisholo.com/html
+    sudo mkdir -p /var/www-sites/tkmtwo.com/html
 
-sudo chown -R apache /var/www-sites
-sudo chgrp -R www /var/www-sites
-sudo chmod 2775 /var/www-sites
+    sudo chown -R apache /var/www-sites
+    sudo chgrp -R www /var/www-sites
+    sudo chmod 2775 /var/www-sites
 
+    find /var/www-sites -type d -exec sudo chmod 2775 {} +
+    find /var/www-sites -type f -exec sudo chmod 0664 {} +
+    
+    cp -r wordpress/* /var/www-sites/dubelyoo.com/html
+    
+    sudo chown -R apache /var/www-sites
+    sudo chgrp -R www /var/www-sites
+    sudo chmod 2775 /var/www-sites
 
-mkdir -p /var/www-sites/dubelyoo.com/html
-mkdir -p /var/www-sites/fisholo.com/html
-mkdir -p /var/www-sites/yakimaflyfishers.org/html/wp
-mkdir -p /var/www-sites/tkmtwo.com/html
-
-cp -r wordpress/* /var/www-sites/dubelyoo.com/html
-cp -r wordpress/* /var/www-sites/yakimaflyfishers.org/html/wp
-
-find /var/www-sites -type d -exec sudo chmod 2775 {} +
-find /var/www-sites -type f -exec sudo chmod 0664 {} +
-```
+    find /var/www-sites -type d -exec sudo chmod 2775 {} +
+    find /var/www-sites -type f -exec sudo chmod 0664 {} +
 
 # Initialize MySQL
 
-```
-sudo service mysqld start
-sudo mysql_secure_installation
+    sudo service mysqld start
+    sudo mysql_secure_installation
 
-mysql -u root -p
+    mysql -u root -p
 
-CREATE USER 'dubelyoo'@'localhost' IDENTIFIED BY 'password';
-CREATE USER 'yakimaflyfishers'@'localhost' IDENTIFIED BY 'password';
+    CREATE USER 'dubelyoo'@'localhost' IDENTIFIED BY 'password';
+    CREATE DATABASE `dubelyoo-wordpress`;
+    GRANT ALL PRIVILEGES ON `dubelyoo-wordpress`.* TO "dubelyoo"@"localhost";
+    FLUSH PRIVILEGES;
+    exit
 
-CREATE DATABASE `dubelyoo-wordpress-db`;
-CREATE DATABASE `yakimaflyfishers-wordpress-db`;
-
-
-GRANT SELECT, INSERT, UPDATE, DELETE ON `dubelyoo-wordpress-db`.* TO "dubelyoo"@"localhost";
-GRANT SELECT, INSERT, UPDATE, DELETE ON `yakimaflyfishers-wordpress-db`.* TO "yakimaflyfishers"@"localhost";
-
-FLUSH PRIVILEGES;
-
-exit
-
-sudo service mysqld stop
-```
+    sudo service mysqld stop
 
 # Configure WordPress for each site.
-```
 https://api.wordpress.org/secret-key/1.1/salt/
 
-cp /var/www-sites/dubelyoo.com/html/wp-config-sample.php /var/www-sites/dubelyoo.com/html/wp-config.php
-vim /var/www-sites/dubelyoo.com/html/wp-config.php
-
-https://api.wordpress.org/secret-key/1.1/salt/
-
-cp /var/www-sites/yakimaflyfishers.com/html/wp-config-sample.php /var/www-sites/yakimaflyfishers.com/html/wp-config.php
-vim /var/www-sites/yakimaflyfishers.com/html/wp-config.php
-```
+    cp /var/www-sites/dubelyoo.com/html/wp-config-sample.php /var/www-sites/dubelyoo.com/html/wp-config.php
+    vim /var/www-sites/dubelyoo.com/html/wp-config.php
 
 # Edit httpd.conf for sites
 
-```
-sudo vim /etc/httpd/conf/httpd.conf
+    sudo touch /etc/httpd/conf.d/vhost.conf
+    sudo vim /etc/httpd/conf.d/vhost.conf
+    
+    <VirtualHost *:80>
+    
+      ServerName dubelyoo.com
+      DocumentRoot /var/www-sites/dubelyoo.com/html
+      <Directory /var/www-sites/dubelyoo.com/html>
+        Order allow,deny
+        Allow from all
+        Require all granted
+        AllowOverride All
+      </Directory>
+    
+    </VirtualHost>
+    
+    <VirtualHost *:80>
+    
+      ServerName fisholo.com
+      DocumentRoot /var/www-sites/fisholo.com/html
+      <Directory /var/www-sites/fisholo.com/html>
+        Order allow,deny
+        Allow from all
+        Require all granted
+        AllowOverride All
+      </Directory>
+    
+    </VirtualHost>
+    
+    <VirtualHost *:80>
+    
+      ServerName tkmtwo.com
+      DocumentRoot /var/www-sites/tkmtwo.com/html
+      <Directory /var/www-sites/tkmtwo.com/html>
+        Order allow,deny
+        Allow from all
+        Require all granted
+        AllowOverride All
+      </Directory>
+    
+    </VirtualHost>
 
 
 
-sudo vim /etc/hosts
-172.30.0.50 ip-172-30-0-50
+    sudo vim /etc/hosts
+    172.30.0.50 ip-172-30-0-50
 
-sudo vim /etc/httpd/conf/httpd.conf
-ServerName ip-172-30-0-50:80
-```
-
+    sudo vim /etc/httpd/conf/httpd.conf
+    ServerName ip-172-30-0-50:80
+    
+    sudo vim /etc/php.ini
+    
+    extension=imagick.so
+    
+    sudo sed -i -e 's/127.0.0.1/64.33.177.215/g' /etc/httpd/conf.d/phpMyAdmin.conf
 
 
 # Start httpd and mysqld
 
-```
-sudo service httpd start
-sudo service mysqld start
+    sudo service httpd start
+    sudo service mysqld start
 
-sudo yum-config-manager --enable epel
-sudo yum install -y phpMyAdmin
-
-sudo sed -i -e 's/127.0.0.1/64.33.177.215/g' /etc/httpd/conf.d/phpMyAdmin.conf
-
-curl -sS https://getcomposer.org/installer | php -- --install-dir=bin --filename=composer
-sudo yum install -y git
-```
+    
