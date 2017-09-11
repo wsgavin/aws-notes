@@ -46,13 +46,13 @@ $ aws iam attach-group-policy --policy-arn arn:aws:iam::aws:policy/IAMReadOnlyAc
 Create a user.
 
 ```bash
-$ aws iam create-user --user-name warren.gavin
+$ aws iam create-user --user-name warren
 ```
 
 Add user to a group.
 
 ```bash
-$ aws iam add-user-to-group --group-name dubelyoo-CodeCommitPowerUsers --user-name warren.gavin
+$ aws iam add-user-to-group --group-name dubelyoo-CodeCommitPowerUsers --user-name warren
 ```
 
 As far as I can tell, you cannot create the "HTTPS Git credentials for AWS CodeCommit" via `awscli`. This has to be done via the AWS Console.
